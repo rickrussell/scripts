@@ -3,13 +3,14 @@
 """ ex. get_aws_ip_ranges.py -h  """
 
 import argparse
-from urllib import *
+from six.moves import urllib
 from netaddr import *
+import pprint
 import json
 import sys
 
 url = 'https://ip-ranges.amazonaws.com/ip-ranges.json'
-response = urlopen(url)
+response = urllib.request.urlopen(url)
 dictionary = json.load(response)
 
 def plain_ec2_range_list(ranges):
@@ -61,8 +62,8 @@ def iptables_aws_range_list(ranges):
     return subnet_ranges
 
 def print_plain_ec2_list():
-    print "Current AWS EC2 PUBLIC IP Ranges"
-    print "----------------------------------"
+    print ("Current AWS EC2 PUBLIC IP Ranges")
+    print ("----------------------------------")
     for line in plain_ec2_range_list(dictionary):
         cidr = IPNetwork(line)
         netmask = cidr.netmask
@@ -70,8 +71,8 @@ def print_plain_ec2_list():
         print network, netmask
 
 def print_plain_rt53_list():
-    print "Current AWS ROUTE53 PUBLIC IP Ranges"
-    print "----------------------------------"
+    print ("Current AWS ROUTE53 PUBLIC IP Ranges")
+    print ("----------------------------------")
     for line in plain_rt53_range_list(dictionary):
         cidr = IPNetwork(line)
         netmask = cidr.netmask
@@ -79,8 +80,8 @@ def print_plain_rt53_list():
         print network, netmask
 
 def print_plain_aws_list():
-    print "Current AWS AMAZON PUBLIC IP Ranges"
-    print "----------------------------------"
+    print ("Current AWS AMAZON PUBLIC IP Ranges")
+    print ("----------------------------------")
     for line in plain_aws_range_list(dictionary):
         cidr = IPNetwork(line)
         netmask = cidr.netmask
@@ -88,8 +89,8 @@ def print_plain_aws_list():
         print network, netmask
 
 def print_iptables_ec2_list():
-    print "remark --------------------------------"
-    print "remark Auto Generated AWS EC2 PUBLIC IP Ranges"
+    print ("remark --------------------------------")
+    print ("remark Auto Generated AWS EC2 PUBLIC IP Ranges")
     for line in iptables_ec2_range_list(dictionary):
         cidr = IPNetwork(line)
         netmask = cidr.netmask
@@ -98,8 +99,8 @@ def print_iptables_ec2_list():
         print (list_entry)
 
 def print_iptables_rt53_list():
-    print "remark --------------------------------"
-    print "remark Auto Generated AWS ROUTE53 PUBLIC IP Ranges"
+    print ("remark --------------------------------")
+    print ("remark Auto Generated AWS ROUTE53 PUBLIC IP Ranges")
     for line in iptables_rt53_range_list(dictionary):
         cidr = IPNetwork(line)
         netmask = cidr.netmask
@@ -108,8 +109,8 @@ def print_iptables_rt53_list():
         print (list_entry)
 
 def print_iptables_aws_list():
-    print "remark --------------------------------"
-    print "remark Auto Generated AWS AMAZON PUBLIC IP Ranges"
+    print ("remark --------------------------------")
+    print ("remark Auto Generated AWS AMAZON PUBLIC IP Ranges")
     for line in iptables_aws_range_list(dictionary):
         cidr = IPNetwork(line)
         netmask = cidr.netmask
