@@ -32,6 +32,11 @@ iptables -A OUTPUT -p icmp --icmp-type echo-request -j ACCEPT
 # SSH
 iptables -A INPUT -p tcp -s $WORK_SUBNET --dport 22 -m state --state NEW,ESTABLISHED -j ACCEPT
 iptables -A OUTPUT -p tcp --sport 22 -m state --state ESTABLISHED -j ACCEPT
+# NFS Server
+iptables -A INPUT -s $WORK_SUBNET -d $WORK_SUBNET -p udp -m multiport --dports 10053,111,2049,32769,875,892 -m state --state NEW,ESTABLISHED -j ACCEPT
+iptables -A INPUT -s $WORK_SUBNET -d $WORK_SUBNET -p tcp -m multiport --dports 10053,111,2049,32803,875,892 -m state --state NEW,ESTABLISHED -j ACCEPT
+iptables -A OUTPUT -s $WORK_SUBNET -d $WORK_SUBNET -p udp -m multiport --sports 10053,111,2049,32769,875,892 -m state --state ESTABLISHED -j ACCEPT
+iptables -A OUTPUT -s $WORK_SUBNET -d $WORK_SUBNET -p tcp -m multiport --sports 10053,111,2049,32803,875,892 -m state --state ESTABLISHED -j ACCEPT
 # IMAP & IMAPS
 iptables -A INPUT -p tcp --dport 143 -m state --state NEW,ESTABLISHED -j ACCEPT
 iptables -A OUTPUT -p tcp --sport 143 -m state --state ESTABLISHED -j ACCEPT
