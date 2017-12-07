@@ -8,7 +8,10 @@
 # reference:
 # https://www.digitalocean.com/community/tutorials/iptables-essentials-common-firewall-rules-and-commands
 
-WORK_SUBNET="10.0.0.0/16"
+# WORK_SUBNET="10.0.0.0/16"
+INTERFACE="enp0s25"
+WORK_SUBNET="10.66.6.0/24"
+ALL="0.0.0.0"
 
 # loopback
 iptables -A INPUT -i lo -j ACCEPT
@@ -22,6 +25,14 @@ iptables -A INPUT -p tcp --tcp-flags ALL ALL -j DROP
 # allow what we request/want
 iptables -I INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+# OpenVPN
+iptables -A INPUT -i $INTERFACE -m state --state NEW -p udp --dport 1194 -j ACCEPT
+iptables -A INPUT -i tun+ -j ACCEPT
+iptables -A FORWARD -i tun0 -j ACCEPT
+iptables -A FORWARD -i tun0 -o $INTERFACE -m state --state RELATED,ESTABLISHED -j ACCEPT
+iptables -A FORWARD -i $INTERFACE -o tun0 -m state --state RELATED,ESTABLISHED -j ACCEPT
+iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -o $INTERFACE -j MASQUERADE
+iptables -A OUTPUT -o tun0 -j ACCEPT
 # DNS out
 iptables -A OUTPUT -p udp --dport 53 -j ACCEPT
 iptables -A INPUT -p udp --sport 53 -j ACCEPT
@@ -43,13 +54,16 @@ iptables -A OUTPUT -p tcp --sport 143 -m state --state ESTABLISHED -j ACCEPT
 iptables -A INPUT -p tcp --dport 993 -m state --state NEW,ESTABLISHED -j ACCEPT
 iptables -A OUTPUT -p tcp --sport 993 -m state --state ESTABLISHED -j ACCEPT
 # CUPS from $WORK_SUBNET
-iptables -A INPUT -p tcp  --destination-port 631  -m state --state NEW -s $WORK_SUBNET -j ACCEPT
-iptables -A INPUT -p udp  --destination-port 631  -m state --state NEW -s $WORK_SUBNET -j ACCEPT
+iptables -A INPUT -p tcp --destination-port 631 -m state --state NEW -s $WORK_SUBNET -j ACCEPT
+iptables -A INPUT -p udp --destination-port 631 -m state --state NEW -s $WORK_SUBNET -j ACCEPT
 #Printing/NetBIOS from $WORK_SUBNET
 iptables -A INPUT -p udp -m udp --dport 137 -s $WORK_SUBNET -j ACCEPT
 iptables -A INPUT -p udp -m udp --dport 138 -s $WORK_SUBNET -j ACCEPT
 iptables -A INPUT -p tcp --dport 139 -s $WORK_SUBNET -j ACCEPT
 iptables -A INPUT -p tcp --dport 445 -s $WORK_SUBNET -j ACCEPT
+# Local Dev Server Port: Ruby/Python/React
+iptables -A OUTPUT -p tcp --dport 3000 -s $WORK_SUBNET -j ACCEPT
+iptables -A INPUT -p tcp --sport 3000 -s $WORK_SUBNET -j ACCEPT
 # Enable Logging
 iptables -N LOGGING
 iptables -A INPUT -j LOGGING
