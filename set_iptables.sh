@@ -9,7 +9,7 @@
 # https://www.digitalocean.com/community/tutorials/iptables-essentials-common-firewall-rules-and-commands
 
 # WORK_SUBNET="10.0.0.0/16"
-INTERFACE="enp0s25"
+INTERFACE=$(ip -o link show | sed -rn '/^[0-9]+: en/{s/.: ([^:]*):.*/\1/p}')
 WORK_SUBNET="10.66.6.0/24"
 ALL="0.0.0.0"
 
