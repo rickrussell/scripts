@@ -1,0 +1,337 @@
+#!/bin/bash
+#
+# TO RUN: curl -s -L https://raw.githubusercontent.com/rickrussell/dotbeard/master/.bootstrap | bash
+# Provision script for dev workstation
+# Includes:
+#   Bash-it: Bash theme and plugins
+#   Tools: yadm, rbenv, ruby-build, vim, nodejs, aws-cli
+#   Powerline: fonts, scripts, themes for vim/tmux https://github.com/powerline/fonts
+#   Dircolors: https://github.com/seebi/dircolors-solarized
+#   Virtualbox: manual deb install
+#   Vagrant: Tool for building and managing virtual machine environments
+#   Docker: Platform for containers; build, ship, and run distributed applications, whether on laptops, data center VMs, or the cloud
+#
+#  NOTE: This dev workstation assumes you have a current yadm repo
+#        This script does not overwrite the current .bashrc if
+#        bash_it theme is set.
+
+set -e
+
+WORK_DIR=$HOME/provision
+YADM_REPO="git@github.com:rickrussell/dotbeard.git"
+PACKAGES="apt-transport-https autoconf bison build-essential ca-certificates conky curl cdebootstrap dia fortune freerdp-x11 git-core libcurl4-openssl-dev libgdbm3 libgdm-dev libffi-dev libncurses5-dev libnetfilter-queue-dev libsqlite3-dev libreadline6-dev libssl-dev libx11-dev libxdamage-dev libxft-dev libxinerama-dev libyaml-dev libxml2-dev libxslt1-dev linux-image-4.13.0-kali1-amd64 live-build mtr nmap nmon nodejs python3-software-properties python-dev python3-pip software-properties-common sqlite tmux vim-nox zlib1g-dev"
+PROVISIONED="$HOME/.provisioned"
+VIM_COLORSCHEME_URL="https://raw.githubusercontent.com/Zabanaa/neuromancer.vim/master/colors/neuromancer.vim"
+VIM_COLORSCHEME=${VIM_COLORSCHEME_URL##*/}
+
+function bootstrap() {
+    printf '\n'
+    printf "########################################################\n"
+    printf "Bootstrapping Debian Workstation\n"
+    mk_work_dir
+    install_pkgs
+#    install_virtualbox
+#    install_vagrant
+#    install_docker
+    install_yadm
+    install_rbenv
+    install_vimnox
+    setup_vim
+    setup_dircolors
+    setup_powerline
+    install_bashit
+    install_nodejs
+    install_aws_cli
+    rm_work_dir
+    stamp_it
+}
+
+function mk_work_dir() {
+    # Create our working directory
+    printf '\n'
+    printf "########################################################\n"
+    printf "Creating working directory\n"
+    mkdir -p $WORK_DIR
+}
+
+function install_pkgs() {
+    # Install necessary packages
+    printf '\n'
+    printf "########################################################\n"
+    printf "Installing prerequisite debian packages\n"
+    sudo apt-get --no-install-recommends -q -y install $PACKAGES
+}
+
+function install_virtualbox() {
+    # Check if virtualbox exists, else Install virtualbox
+    if command -v "virtualbox" >/dev/null; then
+      printf '\n'
+      printf "########################################################\n"
+      printf "Virtualbox found, skipping\n"
+    else
+      printf '\n'
+      printf "########################################################\n"
+      printf "Virtualbox not found, Installing virtualbox\n"
+      sudo add-apt-repository "deb [arch=amd64] http://download.virtualbox.org/virtualbox/debian $(lsb_release -cs) contrib"
+      wget -q "https://www.virtualbox.org/download/oracle_vbox_2016.asc" -O- | sudo apt-key add -
+      sudo apt-get update
+      sudo apt-get -y install virtualbox-5.1
+      sudo apt-get -y install dkms
+
+    fi
+}
+
+function install_vagrant() {
+    # Check if vagrant exists, else Install vagrant
+    if command -v "vagrant" >/dev/null; then
+      printf '\n'
+      printf "########################################################\n"
+      printf "Vagrant found, skipping\n"
+    else
+      printf '\n'
+      printf "########################################################\n"
+      printf "Vagrant not found, Installing vagrant\n"
+      wget https://releases.hashicorp.com/vagrant/1.9.7/vagrant_1.9.7_x86_64.deb -O $WORK_DIR/vagrant_1.9.7_x86_64.deb
+      sudo dpkg -i $WORK_DIR/vagrant_1.9.7_x86_64.deb
+    fi
+}
+
+function install_docker() {
+    # Check if vagrant exists, else Install vagrant
+    if command -v "docker" >/dev/null; then
+      printf '\n'
+      printf "########################################################\n"
+      printf "Docker found, skipping\n"
+    else
+      printf '\n'
+      printf "########################################################\n"
+      printf "Docker not found, Installing docker-ce\n"
+      curl -fsSL "https://download.docker.com/linux/ubuntu/gpg" | sudo apt-key add -
+      sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+      sudo apt-get update
+      sudo apt-get -y install docker-ce
+      sudo usermod -aG docker ${USER}
+      printf '\n'
+      printf "Docker installed.\n"
+      printf '\n'
+      printf "Reminder:\n"
+      printf "Your current user has been added to the docker group, you\n"
+      printf "may have to logout and log back in before you're allowed\n"
+      printf "to use docker."
+      printf "########################################################\n"
+    fi
+}
+
+function install_yadm() {
+    # Install yadm
+    if [ ! -d "$HOME/.yadm" ]; then
+      printf '\n'
+      printf "########################################################\n"
+      printf "Installing yadm"
+      sudo add-apt-repository -y ppa:flexiondotorg/yadm && sudo apt-get update && sudo apt-get -y install yadm
+      # Update yadm repo
+      printf "Updating the yadm repo origin URL\n"
+      yadm remote set-url origin "$YADM_REPO"
+      yadm pull --rebase origin master
+    else
+      printf '\n'
+      printf "########################################################\n"
+      printf "Yadm already installed, skipping\n"
+    fi
+}
+
+function install_rbenv() {
+    # Install rbenv & ruby-build
+    if [ ! -d "$HOME/.rbenv" ]; then
+      printf '\n'
+      printf "########################################################\n"
+      printf "Installing rbenv\n"
+      git clone https://github.com/rbenv/rbenv.git ~/.rbenv
+      if [ ! -d "$HOME/.rbenv/plugins/ruby-build" ]; then
+        printf '\n'
+        printf "########################################################\n"
+        printf "Installing ruby-build\n"
+        git clone https://github.com/rbenv/ruby-build.git $HOME/.rbenv/plugins/ruby-build
+      fi
+    else
+      printf '\n'
+      printf "########################################################\n"
+      printf "rbenv and ruby-build installed, skipping\n"
+    fi
+}
+
+function install_vimnox() {
+    # Install vim-nox
+    pkg="vim-nox"
+    if dpkg --get-selections | grep -q "^$pkg[[:space:]]*install$" >/dev/null; then
+      printf '\n'
+      printf "########################################################\n"
+      printf "$pkg installed, skipping\n"
+    else
+      printf '\n'
+      printf "########################################################\n"
+      printf "Installing vim-nox\n"
+      sudo add-apt-repository -y ppa:pi-rho/dev && sudo apt-get update && sudo apt-get install vim-nox
+      # Set vim-nox as our default editor (visudo won't default to nano)
+      sudo update-alternatives --set editor /usr/bin/vim.nox
+    fi
+}
+
+function setup_vim() {
+    # VIM: create directories
+    mkdir -p $HOME/.vim/{colors,swaps,backups}
+    if [ ! -f $HOME/.vim/colors/$VIM_COLORSCHEME ]; then
+      printf '\n'
+      printf "########################################################\n"
+      printf "Bootstraping Vim\n"
+      wget $VIM_COLORSCHEME_URL -O $HOME/.vim/colors/$VIM_COLORSCHEME
+      vim '+PlugUpdate' '+PlugClean!' '+PlugUpdate' '+qall'
+    else
+      printf '\n'
+      printf "########################################################\n"
+      printf "Vim already configured, skipping\n"
+    fi
+}
+
+function setup_dircolors() {
+    # Install dircolors (in my .bashrc )
+    if [ ! -f "$HOME/.dircolors" ]; then
+      wget -nc https://raw.github.com/trapd00r/LS_COLORS/master/LS_COLORS -O $HOME/.dircolors
+    else
+      printf '\n'
+      printf "########################################################\n"
+      printf "dircolors already installed, skipping\n"
+    fi
+
+}
+
+function setup_powerline() {
+    # https://powerline.readthedocs.io/en/latest/
+    # make sure the following is in your shellrc:
+    # https://powerline.readthedocs.io/en/latest/usage/shell-prompts.html#
+    # For further configuration follow these docs
+    # https://powerline.readthedocs.io/en/latest/configuration.html
+    # We don't "need" this with bash_it, but I'm keeping this here for tmux
+    # and vim powerline config
+    if [ -f "$HOME/.local/share/fonts/PowerlineSymbol.otf" ]; then
+      printf '\n'
+      printf "########################################################\n"
+      printf "Powerline exists,Skipping"
+    else
+      printf '\n'
+      printf "########################################################\n"
+      printf "Powerline not found, installing"
+      pip3 install --user powerline-status
+      pip3 install --user git+git://github.com/powerline/powerline
+      wget https://github.com/powerline/powerline/raw/develop/font/PowerlineSymbols.otf -O $HOME/.local/share/fonts/PowerlineSymbols.otf
+      fc-cache -vf $HOME/.local/share/fonts/
+      wget https://github.com/powerline/powerline/raw/develop/font/10-powerline-symbols.conf -O $HOME/.config/fontconfig/conf.d/10-powerline-symbols.conf
+    fi
+    # Install powerline fonts and scripts
+    if [ ! -d "$HOME/.config/fontconfig/conf.d" ]; then
+      printf '\n'
+      printf "########################################################\n"
+      printf "Installing Powerline Fonts\n"
+      cd $WORK_DIR
+      git clone https://github.com/powerline/fonts.git
+      cd $WORK_DIR/fonts/ && sh install.sh
+      cd $WORK_DIR
+      mkdir -p $HOME/.config/fontconfig/conf.d
+      cp fontconfig/50-enable-terminess-powerline.conf $HOME/.config/fontconfig/conf.d/
+      fc-cache -vf
+      rm -rf fonts/
+    else
+      printf '\n'
+      printf "########################################################\n"
+      printf "Powerline Fonts already installed, skipping\n"
+    fi
+}
+
+function install_bashit() {
+    # Install Bash-it
+    # Check if ~/.bash_it directory exists, if so, skip
+    if [ ! -d "$HOME/.bash_it" ]; then
+      # Check to see if .bashrc already contains bash_it settings
+      file="$HOME/.bashrc"
+      if grep -q "BASH_IT_THEME=" "$file"; then
+        printf "Installing bash_it\n"
+        printf "Found bash_it theme set in .bashrc, setting --no-modify-config\n"
+        options="--silent --no-modify-config"
+      else
+        printf "Installing bash_it\n"
+        printf "No bash_it theme in .bashrc, installing bash_it with defaults\n"
+        options="--silent"
+      fi
+      git clone --depth=1 https://github.com/Bash-it/bash-it.git $HOME/.bash_it
+      $HOME/.bash_it/install.sh $options
+    else
+      printf '\n'
+      printf "########################################################\n"
+      printf "bash-it already installed, skipping\n"
+    fi
+}
+
+function install_nodejs() {
+    # Check if nodejs exists, else Install nodejs
+    if command -v "node" >/dev/null; then
+      printf '\n'
+      printf "########################################################\n"
+      printf "NodeJS found, skipping\n"
+    else
+      printf '\n'
+      printf "########################################################\n"
+      printf "NodeJS not found, Installing nodejs using package manager\n"
+      curl -sL "https://deb.nodesource.com/setup_8.x" | sudo -E bash -
+      sudo apt-get install -y nodejs
+    fi
+}
+
+function install_aws_cli() {
+    # Check if nodejs exists, else Install nodejs
+    if command -v "aws" >/dev/null; then
+      printf '\n'
+      printf "########################################################\n"
+      printf "AWS CLI Tools found, skipping\n"
+    else
+      printf '\n'
+      printf "########################################################\n"
+      printf "AWS CLI Tools not found, Installing aws using python-pip\n"
+      pip install awscli --upgrade --user
+    fi
+}
+
+function rm_work_dir() {
+    # Create our working directory
+    printf '\n'
+    printf "########################################################\n"
+    printf "Removing working directory\n"
+    rm -rf $WORK_DIR
+}
+
+function stamp_it() {
+    printf '\n'
+    printf "########################################################\n"
+    printf "Writing ~/.provisioned to mark workstation as provisioned\n"
+    touch -am $HOME/.provisioned
+    printf '\n'
+    printf "########################################################\n"
+    printf "All Done!\n"
+    printf "You may need to open a new shell to verify bash-it themes are working.\n"
+    printf "rbenv is installed, but you still need to install necessary ruby versions.\n"
+    printf "########################################################\n"
+}
+
+if [[ "$OSTYPE" == "linux-gnu" ]]; then
+  if [ -f $PROVISIONED ]; then
+    printf '\n'
+    printf "########################################################\n"
+    printf '\n'
+    printf "WARNING: Found '$HOME/.provisioned'!\n"
+    printf '\n'
+    printf "Workstation appears to be bootstrapped, rm ~/.provisioned to run this script\n"
+    printf "########################################################\n"
+    exit 1
+  else
+    bootstrap
+  fi
+fi
