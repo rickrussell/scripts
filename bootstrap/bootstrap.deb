@@ -24,11 +24,12 @@ PACKAGES="apt-transport-https autoconf bison build-essential ca-certificates con
 PROVISIONED="$HOME/.provisioned"
 VIM_COLORSCHEME_URL="https://raw.githubusercontent.com/Zabanaa/neuromancer.vim/master/colors/neuromancer.vim"
 VIM_COLORSCHEME=${VIM_COLORSCHEME_URL##*/}
+VAGRANT_VERSION="2.0.3"
 
 function bootstrap() {
     printf '\n'
     printf "########################################################\n"
-    printf "Bootstrapping Debian Workstation\n"
+    printf "Bootstrapping Workstation\n"
     mk_work_dir
     install_pkgs
     install_virtualbox
@@ -61,6 +62,8 @@ function install_pkgs() {
     printf "########################################################\n"
     printf "Installing prerequisite debian packages\n"
     sudo apt-get --no-install-recommends -q -y install $PACKAGES
+    printf "Installing prerequisite python packages as user(--user)\n"
+    pip install --user pipenv
 }
 
 function install_virtualbox() {
@@ -92,8 +95,8 @@ function install_vagrant() {
       printf '\n'
       printf "########################################################\n"
       printf "Vagrant not found, Installing vagrant\n"
-      wget https://releases.hashicorp.com/vagrant/1.9.7/vagrant_1.9.7_x86_64.deb -O $WORK_DIR/vagrant_1.9.7_x86_64.deb
-      sudo dpkg -i $WORK_DIR/vagrant_1.9.7_x86_64.deb
+      wget https://releases.hashicorp.com/vagrant/${VAGRANT_VERSION}/vagrant_${VAGRANT_VERSION}_x86_64.deb -O $WORK_DIR/vagrant_1.9.7_x86_64.deb
+      sudo dpkg -i $WORK_DIR/vagrant_${VAGRANT_VERSION}_x86_64.deb
     fi
 }
 
@@ -285,6 +288,9 @@ function install_nodejs() {
       printf '\n'
       printf "########################################################\n"
       printf "NodeJS not found, Installing nodejs using package manager\n"
+      # create this dir so we can install npm modules locally with -g (already set on path)
+      # https://docs.npmjs.com/getting-started/fixing-npm-permissions
+      mkdir ~/.npm-global
       curl -sL "https://deb.nodesource.com/setup_8.x" | sudo -E bash -
       sudo apt-get install -y nodejs
     fi
