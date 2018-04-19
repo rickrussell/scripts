@@ -1,5 +1,5 @@
 # Description: Boxstarter Script
-# Author: Rick Russell <rrussell@lmud.org>
+# Author: Rick Russell <rickr@noneck.net>
 # Last Updated: 2018-04-18
 #
 # Run this boxstarter by calling the following from an **elevated** command-prompt:
