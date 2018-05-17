@@ -1,3 +1,3 @@
 @ECHO OFF
 
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "..\Win10.ps1" -preset "Win10-ApplyAll.preset"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "..\customize.ps1" -preset "Win10-ApplyAll.preset"

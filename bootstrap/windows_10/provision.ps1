@@ -1,17 +1,12 @@
 # Description: Boxstarter Script
-# Author: Rick Russell <rrussell@lmud.org>
-# Last Updated: 2018-04-18
-#
+# Author: Rick Russell <rickr@noneck.net>
+# Last Updated: 2018-04-30
+
+# This script uses BoxStarter. Learn more: http://boxstarter.org/Learn/WebLauncher
 # Run this boxstarter by calling the following from an **elevated** command-prompt:
-# 	start http://boxstarter.org/package/nr/url?<URL-TO-RAW-GIST>
+# 	start http://boxstarter.org/package/nr/url?https://raw.githubusercontent.com/rickrussell/win-provision/master/provision.ps1
 # OR
-# 	Install-BoxstarterPackage -PackageName <URL-TO-RAW-GIST> -DisableReboots
-#
-# Learn more: http://boxstarter.org/Learn/WebLauncher
-# heavily borrowed from Jessie, but I just have to tweak some things for my boxen. I have a couple of things I use for work,
-# a couple of things I use for home. this includes a bunch of core optimizations i've picked up over the years...
-# little things... small, exlusively paranoid things...
-# Use Chocolatey Upgrade (cup) instead of Install (cinst) as Upgrade Installs package if not found. -RRR
+# Install-BoxstarterPackage -PackageName https://raw.githubusercontent.com/rickrussell/win-provision/master/provision.ps1 -DisableReboots
 
 # From an Administrator PowerShell, if Get-ExecutionPolicy returns Restricted, run:
 if ((Get-ExecutionPolicy) -eq "Restricted") {
@@ -25,11 +20,16 @@ if (!(Test-Path $_boxstarter_path)) {
 }
 
 # Then run: Boxstarter Shell as an Administrator
-# $cwd = "$(Get-Location)"
-# . $_boxstarter_path
-# cd "$cwd"
+$cwd = "$(Get-Location)"
+. $_boxstarter_path
+cd "$cwd"
 
-#---- TEMPORARY ---
+# Enable users on other computers to run commands on this machine temporarily
+# this is Disabled at bottom of script.
+Enable-PSRemoting -Force
+Enable-RemoteDesktop
+
+#---- Temporarily Disable UAC and Windows Update ---
 Disable-UAC
 Disable-MicrosoftUpdate
 
@@ -39,8 +39,8 @@ Import-Module Boxstarter.WinConfig
 Import-Module Boxstarter.Bootsrapper
 
 Write-BoxstarterMessage "***Disabling Useless Services***"
-# There are some services that you simply do not need if you want to lay low. go spelunking in the Services.msc to see why.
-# you are not pulling from shares, you should not expose shares...die LAN Man! with my last breath I will curse thee
+# There are some services you simply don't need. Look in Services.msc.
+# Not pulling from shares?  You should not expose shares...die LAN Man!
 Set-service -Name LanmanServer -StartupType Disabled
 #print spooler: Dead
 Set-service -Name Spooler -StartupType Disabled
@@ -60,7 +60,7 @@ Set-service -Name PeerDistSvc -StartupType Disabled
 Set-service -Name TrkWks -StartupType Disabled
 # i don't use iscsi
 Set-service -Name MSISCSI -StartupType Disabled
-# why is SNMPTRAP still on windows 10? i mean, really, who uses SNMP? is it even a real protocol anymore?
+# I still use snmp in some instances.  In the case of workstations, not so much. -RRR
 Set-service -Name SNMPTRAP -StartupType Disabled
 # Peer to Peer discovery svcs...Begone!
 Set-service -Name PNRPAutoReg -StartupType Disabled
@@ -69,7 +69,7 @@ Set-service -Name p2psvc -StartupType Disabled
 Set-service -Name PNRPsvc -StartupType Disabled
 # no netbios over tcp/ip. unnecessary.
 Set-service -Name lmhosts -StartupType Disabled
-# this is like plug & play only for network devices. no thx. k bye.
+# this is like plug & play only for network devices.
 Set-service -Name SSDPSRV -StartupType Disabled
 # YOU DO NOT NEED TO PUBLISH FROM THIS DEVICE. Discovery Resource Publication service:
 Set-service -Name FDResPub -StartupType Disabled
@@ -101,7 +101,10 @@ Set-WindowsExplorerOptions `
     -DisableShowRecentFilesInQuickAccess `
     -DisableShowFrequentFoldersInQuickAccess
 
+# Large taskbar
 Set-TaskbarOptions -Size Large -Dock Bottom -Combine Full -AlwaysShowIconsOn
+# Small task bar, your choice
+# Set-TaskbarOptions -Size Small -Dock Bottom -Combine Full -AlwaysShowIconsOn
 
 #--- Windows Subsystems/Features ---
 # these are also available for scripting directly on windows and installing natively via Enable-WindowsOptionalFeature.
@@ -110,7 +113,7 @@ Set-TaskbarOptions -Size Large -Dock Bottom -Combine Full -AlwaysShowIconsOn
 
 # Package installation using Chocolatey
 
-# Virtuals only:
+# Hyper-V VM's only:
 # cup -y Microsoft-Hyper-V-All -source windowsFeatures
 
 cup -y chocolatey
@@ -118,43 +121,81 @@ cup -y powershell
 
 refreshenv
 
+Write-BoxstarterMessage "*** Installing Microsoft Applications and Tools ***"
+
+# TODO: Finish Adding Office Enterprise install section using Deployment Tool
+# Office365 Deployment Tool
+# https://docs.microsoft.com/en-us/DeployOffice/overview-of-the-office-2016-deployment-tool
+# https://chocolatey.org/packages/office365-2016-deployment-tool
+
+# Microsoft Apps
+#cup -y office365proplus
+#cup -y microsoft-teams
+
+# Microsoft Visual C++ Runtime 2005
+cup vcredist2005 -y
+# Microsoft Visual C++ Runtime 2008
+cup vcredist2008 -y
+# Microsoft Visual C++ Runtime 2010
+cup vcredist2010 -y
+# Microsoft Visual C++ Runtime 2013
+cup vcredist2013 -y
+# Microsoft Visual C++ Runtime 2015
+cup vcredist2015 -y
+# Microsoft Visual C++ Runtime 2017
+cup vcredist140 -y
+# Microsoft .NET 3.5
+cup dotnet3.5 -y
+# Microsoft .NET 4.6.1
+cup dotnet4.6.1 -y
+if (Test-PendingReboot) {
+    Invoke-Reboot
+}
+#adobereader, java 8 runtime, 7zip, chrome, firefox etc
+cup -y 7zip.install
+cup -y adobereader
+cup -y flashplayerplugin
+cup -y jre8
+cup -y firefox
+cup -y googlechrome
+
+refreshenv
+
 #--- Tools ---
 #
-Write-BoxstarterMessage "***Installing Tools***"
+Write-BoxstarterMessage "*** Installing Development Tools ***"
+
+Write-BoxstarterMessage "**** Installing Git Tools ****"
 #GIT
 cup -y git -params '"/GitAndUnixToolsOnPath /WindowsTerminal"' -y
 cup -y poshgit
-cup -y github
+cup -y github.install
 cup -y git-credential-manager-for-windows
 
-refreshenv
-
-# sysinternals bad, mkay? this only runs on VMs, mkay?
-#choco install sysinternals -y
-cup -y atom
-cup -y curl
-cup -y kitty
-cup -y winscp.install
-cup -y 7zip.install
-cup -y powershellhere
-cup -y powershell
-cup -y wireshark
-cup -y etcher
-cup -y openssh #-params '"/SSHServerFeature"'
-
-refreshenv
-
-Write-BoxstarterMessage "***Installing Ruby, Python, Go, NodeJS, Vagrant and Docker***"
-cup -y ruby
-cup -y nodejs
-cup -y Python
-cup -y golang
-cup -y virtualbox
-cup -y vagrant
-cup -y docker
-cup -y docker-for-windows
-cup -y docker-compose
-cup -y docker-kitematic
+# refreshenv
+#
+# cup -y atom
+# cup -y curl
+# cup -y kitty
+# cup -y winscp.install
+# cup -y powershellhere
+# cup -y wireshark
+# cup -y etcher
+# cup -y openssh #-params '"/SSHServerFeature"'
+#
+# refreshenv
+#
+# Write-BoxstarterMessage "***Installing Ruby, Python, Go, NodeJS, Vagrant and Docker***"
+# cup -y ruby
+# cup -y nodejs
+# cup -y Python
+# cup -y golang
+# cup -y virtualbox
+# cup -y vagrant
+# cup -y docker
+# cup -y docker-for-windows
+# cup -y docker-compose
+# cup -y docker-kitematic
 # kubernetes
 # cup -y kubernetes-cli
 # cup -y minikube
@@ -168,24 +209,6 @@ cup -y dejavufonts
 cup -y sourcecodepro
 cup -y robotofonts
 cup -y droidfonts
-cup -y noto
-
-refreshenv
-
-#Adobe, java, & firefox is malware, but i included it here, because some of you insist and will never learn.
-cup -y adobereader
-cup -y flashplayerplugin
-cup -y jre8
-cup -y firefox
-cup -y googlechrome
-cup -y adblockplusie
-
-refreshenv
-
-# Microsoft Apps
-#cup -y office365proplus
-#cup -y microsoft-teams
-cup -y vcredist140
 
 refreshenv
 
@@ -344,6 +367,9 @@ if ((Get-ExecutionPolicy) -eq "Unrestricted") {
     Set-ExecutionPolicy Restricted -Force
 }
 
+# Make sure we prevent users on other computers from running commands on the local computer
+Disable-PSRemoting -force
+
 Write-BoxstarterMessage "Kicking off Windows Updates"
 # Finally kick off updates!
 Install-WindowsUpdate -acceptEula
@@ -357,4 +383,10 @@ Install-WindowsUpdate -acceptEula
 #  Write-BoxstarterMessage "Renaming Computer to:  $computername "
 #  Rename-Computer -NewName $computername
 # }
+
+# #### Schedule updates to applications with chocolatey
+# schtasks.exe /create /s "localhost" /ru "System" /tn "Update Chocolatey packages" /tr "%ChocolateyInstall%\bin\cup all" /sc DAILY /st 06:00 /F
+# Write-BoxstarterMessage "Set update schedule for apps is finished"
+# if (Test-PendingReboot) { Invoke-Reboot }
+
 Write-BoxstarterMessage "All finished! Your Machine is provisioned with the default set of apps!"
