@@ -1,6 +1,6 @@
 # Description: Boxstarter Script
 # Author: Rick Russell <rickr@noneck.net>
-# Last Updated: 2018-04-30
+# Last Updated: 2018-05-15
 
 # This script uses BoxStarter. Learn more: http://boxstarter.org/Learn/WebLauncher
 # Run this boxstarter by calling the following from an **elevated** command-prompt:
