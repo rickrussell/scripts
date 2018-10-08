@@ -19,7 +19,7 @@ set -e
 
 WORK_DIR=$HOME/provision
 YADM_REPO="git@github.com:rickrussell/dotbeard.git"
-PACKAGES="apt-transport-https autoconf bison build-essential ca-certificates conky curl cdebootstrap dia fortune freerdp-x11 git-core libcurl4-openssl-dev libgdbm3 libgdm-dev libffi-dev libncurses5-dev libnetfilter-queue-dev libsqlite3-dev libreadline6-dev libssl-dev libx11-dev libxdamage-dev libxft-dev libxinerama-dev libyaml-dev libxml2-dev libxslt1-dev linux-image-4.15.0-kali2-amd64 live-build mtr nmap nmon nodejs python3-software-properties python-dev python3-pip software-properties-common sqlite tmux vim-nox zlib1g-dev"
+PACKAGES="apt-transport-https autoconf bison build-essential ca-certificates curl git-core libcurl4-openssl-dev libgdbm3 libgdm-dev libffi-dev libncurses5-dev libnetfilter-queue-dev libsqlite3-dev libreadline6-dev libssl-dev libxft-dev libxinerama-dev libyaml-dev libxml2-dev libxslt1-dev linux-image-4.15.0-kali2-amd64 live-build mtr nmap nmon python3-software-properties python-dev python3-pip software-properties-common sqlite tmux vim-nox zlib1g-dev"
 PROVISIONED="$HOME/.provisioned"
 VIM_COLORSCHEME_URL="https://raw.githubusercontent.com/Zabanaa/neuromancer.vim/master/colors/neuromancer.vim"
 VIM_COLORSCHEME=${VIM_COLORSCHEME_URL##*/}
@@ -75,7 +75,7 @@ function install_virtualbox() {
       sudo add-apt-repository "deb [arch=amd64] http://download.virtualbox.org/virtualbox/debian $(lsb_release -cs) contrib"
       wget -q "https://www.virtualbox.org/download/oracle_vbox_2016.asc" -O- | sudo apt-key add -
       sudo apt-get update
-      sudo apt-get -y install virtualbox-5.1
+      sudo apt-get -y install virtualbox-5.2
       sudo apt-get -y install dkms
 
     fi
@@ -213,7 +213,7 @@ function setup_powerline() {
     # https://powerline.readthedocs.io/en/latest/configuration.html
     # We don't "need" this with bash_it, but I'm keeping this here for tmux
     # and vim powerline config
-    if [ -f "$HOME/.local/share/fonts/PowerlineSymbol.otf" ]; then
+    if [ -f "$HOME/.local/bin/powerline" ]; then
       printf '\n'
       printf "########################################################\n"
       printf "Powerline exists,Skipping"
@@ -221,8 +221,8 @@ function setup_powerline() {
       printf '\n'
       printf "########################################################\n"
       printf "Powerline not found, installing"
+      pip3 install --user setuptools
       pip3 install --user powerline-status
-      pip3 install --user git+git://github.com/powerline/powerline
       wget https://github.com/powerline/powerline/raw/develop/font/PowerlineSymbols.otf -O $HOME/.local/share/fonts/PowerlineSymbols.otf
       fc-cache -vf $HOME/.local/share/fonts/
       wget https://github.com/powerline/powerline/raw/develop/font/10-powerline-symbols.conf -O $HOME/.config/fontconfig/conf.d/10-powerline-symbols.conf
