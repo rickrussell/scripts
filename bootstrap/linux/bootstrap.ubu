@@ -19,7 +19,7 @@ set -e
 
 WORK_DIR=$HOME/provision
 YADM_REPO="git@github.com:rickrussell/dotbeard.git"
-PACKAGES="apt-transport-https autoconf bison build-essential ca-certificates conky curl cdebootstrap dia fortune freerdp-x11 git-core libcurl4-openssl-dev libgdbm3 libgdm-dev libffi-dev libncurses5-dev libsqlite3-dev libreadline6-dev libssl-dev libx11-dev libxdamage-dev libxft-dev libxinerama-dev libyaml-dev libxml2-dev libxslt1-dev linux-image-extra-$(uname -r) linux-image-extra-virtual live-build mtr nmap nmon nodejs python-software-properties python-dev python-pip software-properties-common sqlite tmux vim-nox zlib1g-dev"
+PACKAGES="apt-transport-https autoconf bison build-essential ca-certificates curl fortune git-core libcurl4-openssl-dev libffi-dev libncurses5-dev libsqlite3-dev libreadline6-dev libssl-dev libx11-dev libxdamage-dev libxft-dev libxinerama-dev libyaml-dev libxml2-dev libxslt1-dev nmap nmon python-dev python-pip software-properties-common sqlite tmux vim-nox zlib1g-dev"
 PROVISIONED="$HOME/.provisioned"
 VIM_COLORSCHEME_URL="https://raw.githubusercontent.com/Zabanaa/neuromancer.vim/master/colors/neuromancer.vim"
 VIM_COLORSCHEME=${VIM_COLORSCHEME_URL##*/}
@@ -128,11 +128,14 @@ function install_yadm() {
       printf '\n'
       printf "########################################################\n"
       printf "Installing yadm"
-      sudo add-apt-repository -y ppa:flexiondotorg/yadm && sudo apt-get update && sudo apt-get -y install yadm
+      sudo apt-get install yadm
       # Update yadm repo
       printf "Updating the yadm repo origin URL\n"
-      yadm remote set-url origin "$YADM_REPO"
-      yadm pull --rebase origin master
+      yadm clone "$YADM_REPO"
+      #yadm remote set-url origin "$YADM_REPO"
+      #yadm pull --rebase origin master
+      yadm checkout .
+      yadm pull --rebase
     else
       printf '\n'
       printf "########################################################\n"
@@ -238,7 +241,7 @@ function setup_powerline() {
       cd $WORK_DIR/fonts/ && sh install.sh
       cd $WORK_DIR
       mkdir -p $HOME/.config/fontconfig/conf.d
-      cp fontconfig/50-enable-terminess-powerline.conf $HOME/.config/fontconfig/conf.d/
+      cp fonts/fontconfig/50-enable-terminess-powerline.conf $HOME/.config/fontconfig/conf.d/
       fc-cache -vf
       rm -rf fonts/
     else
@@ -301,7 +304,7 @@ function install_aws_cli() {
     fi
 }
 
-function rm_work_dir() {
+functfonts/ion rm_work_dir() {
     # Create our working directory
     printf '\n'
     printf "########################################################\n"
