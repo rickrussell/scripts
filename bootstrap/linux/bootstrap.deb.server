@@ -59,7 +59,7 @@ function install_pkgs() {
     printf '\n'
     printf "########################################################\n"
     printf "Installing prerequisite debian packages\n"
-    sudo apt-get --no-install-recommends -q -y install $PACKAGES
+    sudo apt-get update && sudo apt-get --no-install-recommends -q -y install $PACKAGES
 }
 
 function install_virtualbox() {
