@@ -19,7 +19,7 @@ set -e
 
 WORK_DIR=$HOME/provision
 YADM_REPO="git@github.com:rickrussell/dotbeard.git"
-PACKAGES="apt-transport-https autoconf bison build-essential ca-certificates curl cdebootstrap dnsutils fortune git-core libcurl4-openssl-dev libgdbm3 libgdm-dev libffi-dev libncurses5-dev libsqlite3-dev libreadline6-dev libssl-dev libx11-dev libxdamage-dev libxft-dev libxinerama-dev libyaml-dev libxml2-dev libxslt1-dev linux-image-$(uname -r) live-build mtr net-tools nmap nmon nodejs software-properties-common python-dev python-pip software-properties-common sqlite tmux vim-nox zlib1g-dev"
+PACKAGES="apt-transport-https autoconf bison build-essential ca-certificates curl cdebootstrap dnsutils fortune git-core libcurl4-openssl-dev libffi-dev libncurses5-dev libsqlite3-dev libreadline6-dev mtr net-tools nmap nmon software-properties-common python-dev python-pip software-properties-common sqlite tmux zlib1g-dev"
 PROVISIONED="$HOME/.provisioned"
 VIM_COLORSCHEME_URL="https://github.com/rickrussell/dotbeard/blob/master/.vim/colors/toxic.vim"
 VIM_COLORSCHEME=${VIM_COLORSCHEME_URL##*/}
