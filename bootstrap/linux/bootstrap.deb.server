@@ -19,10 +19,15 @@ set -e
 
 WORK_DIR=$HOME/provision
 YADM_REPO="git@github.com:rickrussell/dotbeard.git"
-PACKAGES="build-essential ca-certificates curl dnsutils git-core libsqlite3-dev libreadline6-dev mtr net-tools nmap nmon software-properties-common python-dev python-pip software-properties-common sqlite tmux"
+PACKAGES="apt-transport-https build-essential ca-certificates curl dnsutils git-core libsqlite3-dev libreadline6-dev net-tools nmap nmon software-properties-common python-dev python-pip software-properties-common sqlite tmux"
 PROVISIONED="$HOME/.provisioned"
 VIM_COLORSCHEME_URL="https://github.com/rickrussell/dotbeard/blob/master/.vim/colors/toxic.vim"
 VIM_COLORSCHEME=${VIM_COLORSCHEME_URL##*/}
+
+# echo "LC_ALL=en_US.UTF-8" | sudo tee -a /etc/environment
+# echo "en_US.UTF-8 UTF-8" | sudo tee -a /etc/locale.gen
+# echo "LANG=en_US.UTF-8" | sudo tee -a /etc/locale.conf
+sudo locale-gen en_US.UTF-8
 
 function bootstrap() {
     printf '\n'
@@ -30,12 +35,10 @@ function bootstrap() {
     printf "Bootstrapping Debian Workstation\n"
     mk_work_dir
     install_pkgs
-    install_virtualbox
-    install_vagrant
     install_docker
     install_yadm
     install_rbenv
-    install_vimnox
+    install_vim
     setup_vim
     setup_dircolors
     setup_powerline
@@ -59,41 +62,7 @@ function install_pkgs() {
     printf '\n'
     printf "########################################################\n"
     printf "Installing prerequisite debian packages\n"
-    sudo apt-get update && sudo apt-get --no-install-recommends -q -y install $PACKAGES
-}
-
-function install_virtualbox() {
-    # Check if virtualbox exists, else Install virtualbox
-    if command -v "virtualbox" >/dev/null; then
-      printf '\n'
-      printf "########################################################\n"
-      printf "Virtualbox found, skipping\n"
-    else
-      printf '\n'
-      printf "########################################################\n"
-      printf "Virtualbox not found, Installing virtualbox\n"
-      sudo add-apt-repository "deb [arch=amd64] http://download.virtualbox.org/virtualbox/debian $(lsb_release -cs) contrib"
-      wget -q "https://www.virtualbox.org/download/oracle_vbox_2016.asc" -O- | sudo apt-key add -
-      sudo apt-get update
-      sudo apt-get -y install virtualbox-5.1
-      sudo apt-get -y install dkms
-
-    fi
-}
-
-function install_vagrant() {
-    # Check if vagrant exists, else Install vagrant
-    if command -v "vagrant" >/dev/null; then
-      printf '\n'
-      printf "########################################################\n"
-      printf "Vagrant found, skipping\n"
-    else
-      printf '\n'
-      printf "########################################################\n"
-      printf "Vagrant not found, Installing vagrant\n"
-      wget https://releases.hashicorp.com/vagrant/1.9.7/vagrant_1.9.7_x86_64.deb -O $WORK_DIR/vagrant_1.9.7_x86_64.deb
-      sudo dpkg -i $WORK_DIR/vagrant_1.9.7_x86_64.deb
-    fi
+    sudo apt-get --no-install-recommends -q -y install $PACKAGES
 }
 
 function install_docker() {
@@ -160,20 +129,22 @@ function install_rbenv() {
     fi
 }
 
-function install_vimnox() {
-    # Install vim-nox
-    pkg="vim-nox"
-    if dpkg --get-selections | grep -q "^$pkg[[:space:]]*install$" >/dev/null; then
+function install_vim() {
+    # Install vim
+    if command -v "vim" >/dev/null; then
       printf '\n'
       printf "########################################################\n"
-      printf "$pkg installed, skipping\n"
+      printf "vim installed, skipping\n"
     else
       printf '\n'
       printf "########################################################\n"
-      printf "Installing vim-nox\n"
-      sudo add-apt-repository -y ppa:pi-rho/dev && sudo apt-get update && sudo apt-get install vim-nox
-      # Set vim-nox as our default editor (visudo won't default to nano)
-      sudo update-alternatives --set editor /usr/bin/vim.nox
+      printf "Installing vim\n"
+      git clone git@github.com:vim/vim.git
+      cd vim
+      ./configure --enable-python3interp --enable-rubyinterp --enable-gui=no --without-x --enable-cscope --enable-multibyte --prefix=/usr
+      make
+      sudo make install
+      sudo update-alternatives --set editor /usr/bin/vim.
     fi
 }
 
@@ -284,7 +255,7 @@ function install_nodejs() {
       printf '\n'
       printf "########################################################\n"
       printf "NodeJS not found, Installing nodejs using package manager\n"
-      curl -sL "https://deb.nodesource.com/setup_8.x" | sudo -E bash -
+      curl -sL "https://deb.nodesource.com/setup_11.x" | sudo -E bash -
       sudo apt-get install -y nodejs
     fi
 }
