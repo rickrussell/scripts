@@ -32,7 +32,7 @@ function bootstrap() {
     install_pkgs
 #    install_virtualbox
 #    install_vagrant
-#    install_docker
+    install_docker
     install_yadm
     install_rbenv
     install_vimnox
@@ -106,8 +106,8 @@ function install_docker() {
       printf '\n'
       printf "########################################################\n"
       printf "Docker not found, Installing docker-ce\n"
-      curl -fsSL "https://download.docker.com/linux/ubuntu/gpg" | sudo apt-key add -
-      sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+      curl -fsSL "https://download.docker.com/linux/debian/gpg" | apt-key add | sudo apt-key add -
+      sudo tee -a 'deb [arch=amd64] https://download.docker.com/linux/debian buster stable' > /etc/apt/sources.list.d/docker.list
       sudo apt-get update
       sudo apt-get -y install docker-ce
       sudo usermod -aG docker ${USER}
