@@ -8,8 +8,6 @@
 #   Tools: yadm, rbenv, ruby-build, vim, nodejs, aws-cli
 #   Powerline: fonts, scripts, themes for vim/tmux https://github.com/powerline/fonts
 #   Dircolors: https://github.com/seebi/dircolors-solarized
-#   Virtualbox: manual deb install
-#   Vagrant: Tool for building and managing virtual machine environments
 #   Docker: Platform for containers; build, ship, and run distributed applications, whether on laptops, data center VMs, or the cloud
 #
 #  NOTE: This dev workstation assumes you have a current yadm repo
@@ -20,20 +18,17 @@ set -e
 
 WORK_DIR=$HOME/provision
 YADM_REPO="git@github.com:rickrussell/dotbeard.git"
-PACKAGES="apt-transport-https autoconf bison build-essential ca-certificates conky curl cdebootstrap dia fortune freerdp-x11 git-core libcurl4-openssl-dev libgdbm3 libgdm-dev libffi-dev libncurses5-dev libsqlite3-dev libreadline6-dev libssl-dev libx11-dev libxdamage-dev libxft-dev libxinerama-dev libyaml-dev libxml2-dev libxslt1-dev linux-image-$(uname -r) live-build mtr nmap nmon nodejs software-properties-common python-dev python-pip software-properties-common sqlite tmux vim-nox zlib1g-dev"
+PACKAGES="apt-transport-https autoconf bison build-essential ca-certificates conky curl cdebootstrap dia fortune freerdp-x11 git-core libcurl4-openssl-dev libgdbm3 libgdm-dev libffi-dev libncurses5-dev libsqlite3-dev libreadline6-dev libssl-dev libx11-dev libxdamage-dev libxft-dev libxinerama-dev libyaml-dev libxml2-dev libxslt1-dev linux-image-$(uname -r) live-build nmap nmon nodejs software-properties-common python-dev python-pip software-properties-common sqlite tmux vim-nox zlib1g-dev"
 PROVISIONED="$HOME/.provisioned"
 VIM_COLORSCHEME_URL="https://raw.githubusercontent.com/Zabanaa/neuromancer.vim/master/colors/neuromancer.vim"
 VIM_COLORSCHEME=${VIM_COLORSCHEME_URL##*/}
-VAGRANT_VERSION="2.0.3"
 
-function bootstrap() {
+bootstrap() {
     printf '\n'
     printf "########################################################\n"
     printf "Bootstrapping Workstation\n"
     mk_work_dir
     install_pkgs
-    install_virtualbox
-    install_vagrant
     install_docker
     install_yadm
     install_rbenv
@@ -50,7 +45,7 @@ function bootstrap() {
     stamp_it
 }
 
-function mk_work_dir() {
+mk_work_dir() {
     # Create our working directory
     printf '\n'
     printf "########################################################\n"
@@ -58,7 +53,7 @@ function mk_work_dir() {
     mkdir -p $WORK_DIR
 }
 
-function install_pkgs() {
+install_pkgs() {
     # Install necessary packages
     printf '\n'
     printf "########################################################\n"
@@ -68,42 +63,8 @@ function install_pkgs() {
     pip install --user pipenv
 }
 
-function install_virtualbox() {
-    # Check if virtualbox exists, else Install virtualbox
-    if command -v "virtualbox" >/dev/null; then
-      printf '\n'
-      printf "########################################################\n"
-      printf "Virtualbox found, skipping\n"
-    else
-      printf '\n'
-      printf "########################################################\n"
-      printf "Virtualbox not found, Installing virtualbox\n"
-      sudo add-apt-repository "deb [arch=amd64] http://download.virtualbox.org/virtualbox/debian $(lsb_release -cs) contrib"
-      wget -q "https://www.virtualbox.org/download/oracle_vbox_2016.asc" -O- | sudo apt-key add -
-      sudo apt-get update
-      sudo apt-get -y install virtualbox-5.1
-      sudo apt-get -y install dkms
-
-    fi
-}
-
-function install_vagrant() {
-    # Check if vagrant exists, else Install vagrant
-    if command -v "vagrant" >/dev/null; then
-      printf '\n'
-      printf "########################################################\n"
-      printf "Vagrant found, skipping\n"
-    else
-      printf '\n'
-      printf "########################################################\n"
-      printf "Vagrant not found, Installing vagrant\n"
-      wget https://releases.hashicorp.com/vagrant/${VAGRANT_VERSION}/vagrant_${VAGRANT_VERSION}_x86_64.deb -O $WORK_DIR/vagrant_1.9.7_x86_64.deb
-      sudo dpkg -i $WORK_DIR/vagrant_${VAGRANT_VERSION}_x86_64.deb
-    fi
-}
-
-function install_docker() {
-    # Check if vagrant exists, else Install vagrant
+install_docker() {
+    # Check if docker exists, else Install docker
     if command -v "docker" >/dev/null; then
       printf '\n'
       printf "########################################################\n"
@@ -128,7 +89,7 @@ function install_docker() {
     fi
 }
 
-function install_yadm() {
+install_yadm() {
     # Install yadm
     if [ ! -d "$HOME/.yadm" ]; then
       printf '\n'
@@ -146,7 +107,7 @@ function install_yadm() {
     fi
 }
 
-function install_rbenv() {
+install_rbenv() {
     # Install rbenv & ruby-build
     if [ ! -d "$HOME/.rbenv" ]; then
       printf '\n'
@@ -166,7 +127,7 @@ function install_rbenv() {
     fi
 }
 
-function install_vimnox() {
+install_vimnox() {
     # Install vim-nox
     pkg="vim-nox"
     if dpkg --get-selections | grep -q "^$pkg[[:space:]]*install$" >/dev/null; then
@@ -183,7 +144,7 @@ function install_vimnox() {
     fi
 }
 
-function install_vim() {
+install_vim() {
     # Install vim
     if command -v "vim" >/dev/null; then
       printf '\n'
@@ -202,7 +163,7 @@ function install_vim() {
     fi
 }
 
-function setup_vim() {
+setup_vim() {
     # VIM: create directories
     mkdir -p $HOME/.vim/{colors,swaps,backups}
     if [ ! -f $HOME/.vim/colors/$VIM_COLORSCHEME ]; then
@@ -218,7 +179,7 @@ function setup_vim() {
     fi
 }
 
-function setup_dircolors() {
+setup_dircolors() {
     # Install dircolors (in my .bashrc )
     if [ ! -f "$HOME/.dircolors" ]; then
       wget -nc https://raw.github.com/trapd00r/LS_COLORS/master/LS_COLORS -O $HOME/.dircolors
@@ -230,7 +191,7 @@ function setup_dircolors() {
 
 }
 
-function setup_powerline() {
+setup_powerline() {
     # https://powerline.readthedocs.io/en/latest/
     # make sure the following is in your shellrc:
     # https://powerline.readthedocs.io/en/latest/usage/shell-prompts.html#
@@ -276,7 +237,7 @@ function setup_powerline() {
     fi
 }
 
-function install_bashit() {
+install_bashit() {
     # Install Bash-it
     # Check if ~/.bash_it directory exists, if so, skip
     if [ ! -d "$HOME/.bash_it" ]; then
@@ -300,7 +261,7 @@ function install_bashit() {
     fi
 }
 
-function install_nodejs() {
+install_nodejs() {
     # Check if nodejs exists, else Install nodejs
     if command -v "node" >/dev/null; then
       printf '\n'
@@ -318,7 +279,7 @@ function install_nodejs() {
     fi
 }
 
-function install_aws_cli() {
+install_aws_cli() {
     # Check if nodejs exists, else Install nodejs
     if command -v "aws" >/dev/null; then
       printf '\n'
@@ -332,7 +293,7 @@ function install_aws_cli() {
     fi
 }
 
-function install_go() {
+install_go() {
     # Check if nodejs exists, else Install nodejs
     if command -v "go" >/dev/null; then
       printf '\n'
@@ -347,7 +308,7 @@ function install_go() {
     fi
 }
 
-function rm_work_dir() {
+rm_work_dir() {
     # Create our working directory
     printf '\n'
     printf "########################################################\n"
@@ -355,7 +316,7 @@ function rm_work_dir() {
     rm -rf $WORK_DIR
 }
 
-function stamp_it() {
+stamp_it() {
     printf '\n'
     printf "########################################################\n"
     printf "Writing ~/.provisioned to mark workstation as provisioned\n"
