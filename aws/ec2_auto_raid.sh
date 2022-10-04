@@ -97,6 +97,7 @@ clean_fstab() {
   # Remove xvdb/sdb from fstab
   chmod 777 /etc/fstab
   sed -i "/${DRIVE_SCHEME}b/d" /etc/fstab
+  chmod 644 /etc/fstab
 }
 
 populate_fstab() {
